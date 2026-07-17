@@ -51,6 +51,18 @@ class RideAvailabilityControllerTest {
     @Autowired
     private RideAvailabilityRepository rideAvailabilityRepository;
 
+    @Autowired
+    private com.project.ridelink.chat.repository.ChatMessageRepository chatMessageRepository;
+
+    @Autowired
+    private com.project.ridelink.riderequest.repository.RideRequestRepository rideRequestRepository;
+
+    @Autowired
+    private com.project.ridelink.ridematch.repository.RideMatchMemberRepository rideMatchMemberRepository;
+
+    @Autowired
+    private com.project.ridelink.ridematch.repository.RideMatchRepository rideMatchRepository;
+
     private College testCollege;
     private College otherCollege;
     private String tokenA;
@@ -60,6 +72,10 @@ class RideAvailabilityControllerTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        chatMessageRepository.deleteAll();
+        rideRequestRepository.deleteAll();
+        rideMatchMemberRepository.deleteAll();
+        rideMatchRepository.deleteAll();
         rideAvailabilityRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();

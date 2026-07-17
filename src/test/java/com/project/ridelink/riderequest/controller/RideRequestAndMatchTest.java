@@ -64,6 +64,9 @@ class RideRequestAndMatchTest {
     @Autowired
     private RideMatchMemberRepository rideMatchMemberRepository;
 
+    @Autowired
+    private com.project.ridelink.chat.repository.ChatMessageRepository chatMessageRepository;
+
     private College testCollege;
     private User studentA;
     private User studentB;
@@ -74,6 +77,7 @@ class RideRequestAndMatchTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        chatMessageRepository.deleteAll();
         rideRequestRepository.deleteAll();
         rideMatchMemberRepository.deleteAll();
         rideMatchRepository.deleteAll();
