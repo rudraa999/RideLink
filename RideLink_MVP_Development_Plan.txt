@@ -1,0 +1,713 @@
+RideLink - MVP Development Plan
+
+1. Project Overview
+
+RideLink is a college-focused student ride-sharing coordination
+platform.
+
+The main purpose of RideLink is to connect students who are leaving the
+same college at approximately the same time and travelling toward the
+same or nearby areas.
+
+Students may not know each other personally, but if they are heading in
+the same direction, RideLink helps them discover each other, connect,
+communicate, decide on a meeting point, and share the cost of an
+external ride such as an auto or cab.
+
+RideLink itself will not provide vehicles or drivers in the MVP. Its
+primary responsibility is:
+
+Student Discovery + Ride Matching + Communication + Coordination
+
+Initial college supported: MIT World Peace University (MIT-WPU), Pune
+
+Future versions can support multiple colleges.
+
+------------------------------------------------------------------------
+
+2. Core Problem
+
+Every day, many students leave college at similar times and travel
+toward the same areas. However, because they do not know each other or
+have no way to discover compatible co-travellers, they book separate
+autos or cabs and pay the full fare individually.
+
+RideLink solves this problem by allowing verified students to indicate
+that they are available to share a ride and discover other students
+travelling in the same direction.
+
+Core concept:
+
+Same College + Similar Departure Time + Similar Destination -> Match
+Students -> Connect -> Chat -> Meet -> Share External Ride -> Split
+Travel Cost
+
+------------------------------------------------------------------------
+
+3. Target Users
+
+Primary users: Students of MIT-WPU, Pune
+
+Future users: Students from other verified colleges and universities.
+
+------------------------------------------------------------------------
+
+4. MVP Features
+
+4.1 Student Registration
+
+A student can create an account by providing:
+
+-   Full name
+-   Username
+-   Email
+-   Password
+-   College
+
+For the initial MVP, the college selection will contain:
+
+-   MIT World Peace University (MIT-WPU), Pune
+
+The database and application architecture should still be designed to
+support multiple colleges in the future.
+
+Recommended future enhancement: Verify students using their official
+college email address or another college verification mechanism.
+
+------------------------------------------------------------------------
+
+4.2 Login and Authentication
+
+Students can log in using their credentials.
+
+Authentication technology:
+
+-   Spring Security
+-   JWT authentication
+-   Access tokens
+-   Refresh tokens
+
+Security requirements:
+
+-   Passwords must be hashed using BCrypt.
+-   Never store plain-text passwords.
+-   Use short-lived JWT access tokens.
+-   Use refresh tokens for secure login persistence.
+-   Prefer storing refresh tokens in Secure, HttpOnly, SameSite cookies.
+-   Implement refresh-token rotation and revocation.
+-   Validate JWT signature and expiration on protected requests.
+-   Protect backend APIs using Spring Security authorization rules.
+-   Use HTTPS in production.
+-   Configure CORS carefully for the Angular frontend.
+-   Do not expose authentication secrets in source code.
+
+Note: JWT provides stateless authentication rather than traditional
+server-side session management.
+
+------------------------------------------------------------------------
+
+4.3 Ride Availability
+
+The main dashboard should provide a simple availability control.
+
+Example:
+
+Status: UNAVAILABLE
+
+[ I’M LEAVING COLLEGE ]
+
+When the student clicks the button, the application asks:
+
+1.  Where are you going?
+2.  When are you leaving?
+3.  Optional preferred transport type
+
+Example:
+
+Destination: Karve Nagar Departure: Now Transport: Any
+
+After submitting:
+
+Status: AVAILABLE FOR RIDE SHARING
+
+The student should now become visible to compatible students.
+
+------------------------------------------------------------------------
+
+4.4 Availability Status
+
+Students should be able to manually turn their availability ON or OFF.
+
+When availability is OFF:
+
+-   The student should not appear in active ride searches.
+-   Other students should not be able to send new ride requests based on
+    an inactive availability.
+
+When availability is ON:
+
+-   The student can appear in compatible ride searches.
+
+Availability should also automatically expire after a configured period,
+such as 30 to 60 minutes, to prevent stale availability records.
+
+------------------------------------------------------------------------
+
+4.5 Destination-Based Ride Matching
+
+For the first MVP, use area-based matching.
+
+Example:
+
+Student A: MIT-WPU -> Karve Nagar
+
+Student B: MIT-WPU -> Karve Nagar
+
+Result: Potential Ride Match
+
+The application should show students who:
+
+-   Belong to the same college
+-   Are currently available
+-   Have compatible destinations
+-   Have compatible departure times
+
+Initial matching can use exact or normalized area names.
+
+Future upgrade: Use Maps APIs and route-overlap calculations to match
+students travelling along similar routes even when their final
+destinations are different.
+
+------------------------------------------------------------------------
+
+4.6 Available Students
+
+Students should see a list of compatible active students.
+
+Example:
+
+Name: Student A Destination: Karve Nagar Leaving: Now Status: Available
+
+The application should avoid exposing unnecessary private information.
+
+Only currently active and relevant students should appear.
+
+------------------------------------------------------------------------
+
+4.7 Ride Request System
+
+A student can send a ride-sharing request to another compatible student.
+
+Request states:
+
+-   PENDING
+-   ACCEPTED
+-   REJECTED
+-   CANCELLED
+
+Example notification:
+
+“Rudra wants to connect for a shared ride toward Karve Nagar.”
+
+The receiving student can:
+
+-   Accept
+-   Reject
+
+Direct ride coordination should become available after the request is
+accepted.
+
+------------------------------------------------------------------------
+
+4.8 Ride Match / Ride Session
+
+When a ride request is accepted, the system creates a ride-sharing
+session or match.
+
+The matched students can:
+
+-   View basic participant information
+-   Communicate through chat
+-   Decide on a meeting point
+-   Coordinate the external ride
+
+The MVP can initially support two students per match.
+
+Future versions can support group ride matching for multiple students.
+
+------------------------------------------------------------------------
+
+4.9 Real-Time Chat
+
+After a ride request is accepted, matched students can communicate using
+real-time chat.
+
+Technology:
+
+-   Spring Boot WebSocket
+-   STOMP
+-   Angular WebSocket client
+
+Example:
+
+Student A: “I am near the main gate.”
+
+Student B: “I’ll reach there in 5 minutes.”
+
+Student A: “Okay, let’s book an auto from there.”
+
+Chat access should be restricted to authorized participants of the ride
+match.
+
+------------------------------------------------------------------------
+
+4.10 Real-Time Status Updates
+
+When a student:
+
+-   Turns availability ON
+-   Turns availability OFF
+-   Changes ride information
+-   Accepts a request
+-   Becomes unavailable
+
+The relevant frontend screens should update without requiring a manual
+page refresh where practical.
+
+WebSocket can be used for important real-time events.
+
+------------------------------------------------------------------------
+
+4.11 Student Profile
+
+Basic profile information:
+
+-   Name
+-   Username
+-   College
+-   Account information
+
+Future additions:
+
+-   Profile photo
+-   Verified student badge
+-   Completed shared rides
+-   Ratings
+-   Safety information
+
+------------------------------------------------------------------------
+
+4.12 Basic Ride History
+
+Students should be able to view previous ride-sharing matches.
+
+Possible information:
+
+-   Destination
+-   Date
+-   Matched student
+-   Ride status
+
+Avoid storing unnecessary sensitive location history.
+
+------------------------------------------------------------------------
+
+5. MVP Pages - Angular Frontend
+
+The Angular application should initially contain:
+
+1.  Landing Page
+2.  Register Page
+3.  Login Page
+4.  Student Dashboard
+5.  Create/Activate Ride Availability
+6.  Compatible Students / Find Ride Partners
+7.  Incoming and Sent Ride Requests
+8.  Active Ride Match
+9.  Real-Time Chat
+10. Ride History
+11. Student Profile
+
+------------------------------------------------------------------------
+
+6. Technology Stack
+
+Frontend
+
+Technology: Angular
+
+Responsibilities:
+
+-   User interface
+-   Authentication flow
+-   Dashboard
+-   Ride availability management
+-   Compatible student display
+-   Ride requests
+-   Real-time chat
+-   Profile and ride history
+
+Additional frontend technologies:
+
+-   TypeScript
+-   HTML
+-   CSS/SCSS
+-   Angular Router
+-   Angular HttpClient
+-   HTTP Interceptors
+-   Route Guards
+-   RxJS
+
+------------------------------------------------------------------------
+
+Backend
+
+Technology: Java + Spring Boot
+
+Responsibilities:
+
+-   REST APIs
+-   Authentication
+-   Authorization
+-   Business logic
+-   Ride availability management
+-   Ride matching
+-   Ride requests
+-   Chat authorization
+-   Database operations
+
+Recommended backend modules:
+
+-   Authentication
+-   User/Student
+-   College
+-   Ride Availability
+-   Ride Matching
+-   Ride Requests
+-   Ride Sessions
+-   Chat
+-   Notifications
+
+------------------------------------------------------------------------
+
+Security
+
+Technologies:
+
+-   Spring Security
+-   JWT
+-   BCrypt
+
+Authentication approach:
+
+Short-lived Access Token + Refresh Token
+
+Recommended secure flow:
+
+User Login -> Backend validates credentials -> Backend issues access
+token and refresh token -> Angular uses access token for protected API
+requests -> Refresh token is used to obtain a new access token -> Logout
+revokes or invalidates the refresh token
+
+Important: Do not treat JWT as a traditional server-side session.
+
+------------------------------------------------------------------------
+
+Database
+
+Technology: MySQL
+
+ORM:
+
+-   Spring Data JPA
+-   Hibernate
+
+Initial database entities/tables:
+
+1.  users
+2.  colleges
+3.  ride_availabilities
+4.  ride_requests
+5.  ride_matches
+6.  ride_match_members
+7.  chat_messages
+8.  refresh_tokens
+
+Exact schema should be designed before backend implementation.
+
+------------------------------------------------------------------------
+
+Real-Time Communication
+
+Technologies:
+
+-   WebSocket
+-   STOMP
+
+Uses:
+
+-   Real-time chat
+-   Ride request notifications
+-   Availability updates
+-   Match updates
+
+------------------------------------------------------------------------
+
+API Testing
+
+Tool:
+
+Postman
+
+Use Postman to test backend APIs before integrating them with Angular.
+
+------------------------------------------------------------------------
+
+Build Tools
+
+Backend: Maven
+
+Frontend: Angular CLI / npm
+
+------------------------------------------------------------------------
+
+Version Control
+
+Technology: Git + GitHub
+
+Recommended workflow:
+
+main develop feature branches
+
+Examples:
+
+feature/authentication feature/ride-availability feature/ride-matching
+feature/chat
+
+------------------------------------------------------------------------
+
+Deployment
+
+Recommended technologies:
+
+-   Docker
+-   Cloud hosting
+-   MySQL production database
+-   HTTPS
+
+The exact cloud provider can be decided later.
+
+------------------------------------------------------------------------
+
+7. High-Level Architecture
+
+Angular Frontend | | REST API / WebSocket v Spring Boot Backend | |–
+Spring Security + JWT | |– Controller Layer | |– Service Layer | |–
+Repository Layer | v MySQL Database
+
+Real-time communication:
+
+Angular <- WebSocket / STOMP -> Spring Boot
+
+------------------------------------------------------------------------
+
+8. Suggested Backend Package Structure
+
+com.ridelink
+
+-   config
+-   security
+-   auth
+-   user
+-   college
+-   availability
+-   matching
+-   riderequest
+-   ridematch
+-   chat
+-   notification
+-   exception
+-   common
+
+Each business module can contain:
+
+-   controller
+-   service
+-   repository
+-   entity
+-   dto
+-   mapper
+
+The exact structure can be adjusted while implementing the project.
+
+------------------------------------------------------------------------
+
+9. Development Phases
+
+Phase 1 - Project Setup
+
+-   Create GitHub repository
+-   Create Angular project
+-   Create Spring Boot project
+-   Configure MySQL
+-   Configure application environments
+-   Establish frontend-backend communication
+
+Phase 2 - Authentication
+
+-   User entity
+-   College entity
+-   Registration
+-   Login
+-   Spring Security
+-   JWT access token
+-   Refresh token
+-   Logout
+-   Angular authentication service
+-   HTTP interceptor
+-   Route guards
+
+Phase 3 - Student Dashboard
+
+-   Student profile
+-   Dashboard UI
+-   Availability ON/OFF
+-   Destination selection
+-   Departure time
+
+Phase 4 - Ride Matching
+
+-   Store active ride availability
+-   Find compatible students
+-   Filter by college
+-   Filter by destination
+-   Filter by departure time
+-   Exclude inactive students
+
+Phase 5 - Ride Requests
+
+-   Send request
+-   Receive request
+-   Accept request
+-   Reject request
+-   Cancel request
+-   Create ride match after acceptance
+
+Phase 6 - Real-Time Communication
+
+-   Configure WebSocket
+-   Configure STOMP
+-   Real-time ride notifications
+-   Real-time availability updates
+-   Real-time chat
+
+Phase 7 - Ride History and Profile
+
+-   Previous matches
+-   Basic profile management
+
+Phase 8 - Security and Testing
+
+-   Backend validation
+-   Authorization testing
+-   JWT security testing
+-   Prevent unauthorized chat access
+-   CORS configuration
+-   Error handling
+-   API testing
+-   Frontend testing
+
+Phase 9 - Deployment
+
+-   Dockerize frontend
+-   Dockerize backend
+-   Configure production MySQL
+-   Configure environment variables
+-   Deploy application
+-   Configure HTTPS
+
+------------------------------------------------------------------------
+
+10. Features Not Required for the First MVP
+
+These should be considered future upgrades:
+
+-   Google Maps route matching
+-   Live GPS tracking
+-   AI-powered ride recommendations
+-   Group rides
+-   Automatic fare calculation
+-   In-app payments
+-   Uber/Ola/Rapido booking integration
+-   Ratings and reviews
+-   Emergency/SOS features
+-   Advanced college verification
+-   Redis caching
+-   Push notifications
+-   Mobile application
+
+------------------------------------------------------------------------
+
+11. Future Smart Matching
+
+Future RideLink versions can move from simple destination matching to
+route-based matching.
+
+Example:
+
+Student A: MIT-WPU -> Warje
+
+Student B: MIT-WPU -> Karve Nagar
+
+If their travel routes overlap significantly, RideLink can recommend
+them as potential ride partners.
+
+Possible future matching factors:
+
+-   Same college
+-   Current availability
+-   Departure time difference
+-   Destination distance
+-   Route overlap percentage
+-   Preferred transport type
+
+------------------------------------------------------------------------
+
+12. MVP Success Goal
+
+The MVP is successful if a student can:
+
+1.  Register and log in securely.
+2.  Set themselves as available for ride sharing.
+3.  Enter a destination and departure time.
+4.  Discover compatible students.
+5.  Send a ride request.
+6.  Accept or reject a ride request.
+7.  Create a ride match.
+8.  Chat with the matched student.
+9.  Turn availability off.
+10. See status changes reflected correctly.
+11. View basic previous ride matches.
+
+------------------------------------------------------------------------
+
+13. Project Positioning
+
+RideLink is not a taxi-booking application and students are not
+necessarily drivers.
+
+RideLink is a student ride coordination and matching platform.
+
+The platform connects verified students who are leaving the same campus
+at similar times and travelling toward similar destinations, enabling
+them to coordinate shared transportation and reduce individual travel
+costs.
+
+Initial Product:
+
+RideLink for MIT-WPU Students
+
+Core Mission:
+
+“Help students discover compatible co-travellers, connect safely, share
+transportation, and reduce daily travel costs.”
