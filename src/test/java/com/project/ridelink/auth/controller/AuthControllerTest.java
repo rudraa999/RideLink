@@ -41,10 +41,14 @@ class AuthControllerTest {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 
+    @Autowired
+    private com.project.ridelink.availability.repository.RideAvailabilityRepository rideAvailabilityRepository;
+
     private College testCollege;
 
     @BeforeEach
     void setUp() {
+        rideAvailabilityRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
 
