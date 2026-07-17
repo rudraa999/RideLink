@@ -31,7 +31,7 @@ public class RideAvailabilityService {
         RideAvailability availability = RideAvailability.builder()
                 .user(user)
                 .destination(request.getDestination())
-                .departureTime(request.getDepartureTime())
+                .departureTime(request.getDepartureTime() == null ? LocalDateTime.now() : request.getDepartureTime())
                 .transportType(request.getTransportType() == null ? "ANY" : request.getTransportType())
                 .isActive(true)
                 .expiresAt(LocalDateTime.now().plusMinutes(60))
@@ -74,16 +74,12 @@ public class RideAvailabilityService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startTime = active.getDepartureTime().minusMinutes(60);
-        LocalDateTime endTime = active.getDepartureTime().plusMinutes(60);
 
         List<RideAvailability> matches = rideAvailabilityRepository.findCompatibleAvailabilities(
                 user.getCollege().getId(),
                 user.getId(),
                 active.getDestination(),
-                now,
-                startTime,
-                endTime
+                now
         );
 
         return matches.stream()
@@ -94,6 +90,7 @@ public class RideAvailabilityService {
     private AvailabilityResponse mapToResponse(RideAvailability availability) {
         return AvailabilityResponse.builder()
                 .id(availability.getId())
+                .userId(availability.getUser().getId())
                 .username(availability.getUser().getUsername())
                 .name(availability.getUser().getName())
                 .destination(availability.getDestination())

@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @Builder
 public class AvailabilityResponse {
     private Long id;
+    private Long userId;
     private String username;
     private String name;
     private String destination;

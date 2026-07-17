@@ -27,15 +27,11 @@ public interface RideAvailabilityRepository extends JpaRepository<RideAvailabili
            "AND r.user.id != :userId " +
            "AND LOWER(r.destination) = LOWER(:destination) " +
            "AND r.isActive = true " +
-           "AND r.expiresAt > :now " +
-           "AND r.departureTime >= :startTime " +
-           "AND r.departureTime <= :endTime")
+           "AND r.expiresAt > :now")
     List<RideAvailability> findCompatibleAvailabilities(
             @Param("collegeId") Long collegeId,
             @Param("userId") Long userId,
             @Param("destination") String destination,
-            @Param("now") LocalDateTime now,
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime
+            @Param("now") LocalDateTime now
     );
 }

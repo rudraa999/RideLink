@@ -14,6 +14,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
@@ -149,5 +150,52 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testGetCurrentUserProfileSuccess() throws Exception {
+        // Register & login
+        RegisterRequest register = RegisterRequest.builder()
+                .name("Profile Test Student")
+                .username("profiletest")
+                .email("profiletest@mitwpu.edu.in")
+                .password("securepassword")
+                .collegeId(testCollege.getId())
+                .build();
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(register)))
+                .andExpect(status().isCreated());
+
+        LoginRequest login = LoginRequest.builder()
+                .usernameOrEmail("profiletest")
+                .password("securepassword")
+                .build();
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(login)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String token = objectMapper.readTree(result.getResponse().getContentAsString()).get("accessToken").asText();
+
+        // Get profile
+        mockMvc.perform(get("/api/users/me")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username", is("profiletest")))
+                .andExpect(jsonPath("$.name", is("Profile Test Student")))
+                .andExpect(jsonPath("$.email", is("profiletest@mitwpu.edu.in")))
+                .andExpect(jsonPath("$.collegeName", is(testCollege.getName())))
+                .andExpect(jsonPath("$.collegeCity", is(testCollege.getCity())))
+                .andExpect(jsonPath("$.role", is("USER")));
+    }
+
+    @Test
+    void testGetCurrentUserProfileUnauthenticated() throws Exception {
+        mockMvc.perform(get("/api/users/me"))
+                .andExpect(status().isForbidden());
     }
 }

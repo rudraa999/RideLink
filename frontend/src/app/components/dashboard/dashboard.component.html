@@ -1,0 +1,211 @@
+<div class="dashboard-container">
+  <!-- Top Glass Navbar -->
+  <nav class="navbar glass-card animate-fade">
+    <div class="nav-brand">
+      <span class="logo-icon">⚡</span>
+      <h2>Ride<span>Link</span></h2>
+    </div>
+    <div class="nav-user" *ngIf="userProfile">
+      <div class="user-details">
+        <span class="user-name">{{ userProfile.name }}</span>
+        <span class="user-college">{{ userProfile.collegeName }}</span>
+      </div>
+      <button (click)="logout()" class="btn btn-secondary btn-sm">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- Case 1: In Active Ride Match Session (Full Screen Split View) -->
+  <div class="match-session-layout animate-fade" *ngIf="activeMatch">
+    <div class="session-sidebar glass-card">
+      <div class="session-badge">
+        <span class="pulse-icon">●</span> Active Ride Session
+      </div>
+      <div class="co-traveller-profile" *ngIf="getOtherParticipant(activeMatch) as peer">
+        <div class="peer-avatar">👤</div>
+        <h3>{{ peer.name }}</h3>
+        <p class="peer-username">&#64;{{ peer.username }}</p>
+        <p class="peer-college">{{ peer.collegeName }}</p>
+      </div>
+      <hr class="separator">
+      <div class="ride-detail-list">
+        <div class="detail-item">
+          <span class="label">Destination</span>
+          <span class="value">{{ availability?.destination || 'Destination Set' }}</span>
+        </div>
+      </div>
+      <div class="session-actions">
+        <button (click)="completeActiveMatch(activeMatch.id)" class="btn btn-primary btn-block">Complete Ride</button>
+        <button (click)="cancelActiveMatch(activeMatch.id)" class="btn btn-danger btn-block">Cancel Sharing</button>
+      </div>
+    </div>
+
+    <!-- STOMP Real-Time Chat Window -->
+    <div class="chat-container glass-card">
+      <div class="chat-header">
+        <h3>Direct Ride Coordination</h3>
+        <p>Coordinate your meeting point and ride booking details</p>
+      </div>
+
+      <div class="chat-messages" id="chat-messages-container">
+        <div *ngIf="chatMessages.length === 0" class="empty-chat">
+          <div class="chat-placeholder-icon">💬</div>
+          <p>No messages yet. Send a greeting to start coordinating!</p>
+        </div>
+        
+        <div 
+          *ngFor="let msg of chatMessages" 
+          [ngClass]="{'message-outgoing': msg.senderUsername === userProfile?.username, 'message-incoming': msg.senderUsername !== userProfile?.username}"
+          class="chat-bubble-wrapper">
+          <div class="chat-sender-name">{{ msg.senderUsername === userProfile?.username ? 'You' : msg.senderName }}</div>
+          <div class="chat-bubble">
+            <p>{{ msg.content }}</p>
+            <span class="chat-timestamp">{{ msg.sentAt | date:'shortTime' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <form (ngSubmit)="sendChat()" class="chat-input-area">
+        <input 
+          type="text" 
+          name="newMessage" 
+          placeholder="Type your message here..." 
+          [(ngModel)]="newMessage" 
+          autocomplete="off">
+        <button type="submit" class="btn btn-primary btn-send">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Case 2: Standard Dashboard Mode -->
+  <div class="dashboard-grid animate-fade" *ngIf="!activeMatch">
+    
+    <!-- Left Column: Availability Status Card -->
+    <div class="grid-col glass-card availability-card">
+      <div class="col-header">
+        <h3>Availability Status</h3>
+      </div>
+      
+      <div class="status-indicator">
+        <span class="status-label">Current Status:</span>
+        <span [ngClass]="isActive ? 'badge-success' : 'badge-danger'" class="badge">
+          {{ isActive ? 'Active' : 'Offline' }}
+        </span>
+      </div>
+
+      <div *ngIf="isActive && availability" class="active-status-details">
+        <div class="status-info-row">
+          <span class="label">Destination:</span>
+          <span class="value">{{ availability.destination }}</span>
+        </div>
+        <div class="status-info-row">
+          <span class="label">Expires At:</span>
+          <span class="value text-warning">{{ availability.expiresAt | date:'shortTime' }}</span>
+        </div>
+        <button (click)="handleToggle()" class="btn btn-secondary btn-block margin-top">Deactivate Status</button>
+      </div>
+
+      <form *ngIf="!isActive" (ngSubmit)="activateStatus()" class="activation-form">
+        <div class="form-group">
+          <label for="destination">Where are you going?</label>
+          <select 
+            id="destination" 
+            name="destination" 
+            [(ngModel)]="toggleForm.destination"
+            required>
+            <option value="" disabled selected>Choose destination</option>
+            <option value="Karve Nagar">Karve Nagar</option>
+            <option value="Viman Nagar">Viman Nagar</option>
+            <option value="Paud Road">Paud Road</option>
+            <option value="FC Road">FC Road</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="transportType">Preferred Transport</label>
+          <select id="transportType" name="transportType" [(ngModel)]="toggleForm.transportType">
+            <option value="ANY">Any (Cab / Auto / Walking)</option>
+            <option value="AUTO">Rickshaw</option>
+            <option value="CAB">Cab</option>
+            <option value="BIKE">Two Wheeler</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Activate Sharing Mode</button>
+      </form>
+    </div>
+
+    <!-- Middle Column: Discover Compatible Students -->
+    <div class="grid-col glass-card discover-card">
+      <div class="col-header">
+        <h3>Discover Co-Travellers</h3>
+        <p class="subtitle" *ngIf="isActive">Matches from your college travelling within 60 mins</p>
+      </div>
+
+      <div *ngIf="!isActive" class="inactive-overlay">
+        <span class="overlay-icon">⚡</span>
+        <h4>Go Active to Discover Matches</h4>
+        <p>Set your destination and time to view compatible students heading the same way.</p>
+      </div>
+
+      <div *ngIf="isActive && compatibleMatches.length === 0" class="empty-state">
+        <span class="empty-icon">🔍</span>
+        <h4>No Matches Found Yet</h4>
+        <p>We'll notify you as soon as someone from your college activates with a matching destination.</p>
+      </div>
+
+      <div *ngIf="isActive && compatibleMatches.length > 0" class="matches-list">
+        <div *ngFor="let peer of compatibleMatches" class="match-item-card glass-card">
+          <div class="match-info">
+            <h4>{{ peer.name }}</h4>
+            <p class="match-details">Heading to <strong>{{ peer.destination }}</strong></p>
+            <p class="match-time">Preferred Transport: <strong>{{ peer.transportType }}</strong></p>
+          </div>
+          <button (click)="sendRideRequest(peer.userId)" class="btn btn-primary btn-sm">Request Ride</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Requests (Incoming & Outgoing) -->
+    <div class="grid-col glass-card requests-card">
+      <div class="col-header">
+        <h3>Connection Requests</h3>
+      </div>
+
+      <!-- Section: Incoming -->
+      <div class="request-section">
+        <h4 class="section-title">Incoming (Received)</h4>
+        <div *ngIf="incomingRequests.length === 0" class="request-empty">
+          No incoming requests
+        </div>
+        <div *ngFor="let req of incomingRequests" class="request-item glass-card">
+          <div class="req-details">
+            <span class="req-sender">{{ req.senderName }}</span>
+            <span class="req-sub">wants to share ride to {{ req.destination }}</span>
+          </div>
+          <div class="req-actions">
+            <button (click)="acceptRideRequest(req.id)" class="btn btn-success btn-xs">Accept</button>
+            <button (click)="rejectRideRequest(req.id)" class="btn btn-danger btn-xs">Decline</button>
+          </div>
+        </div>
+      </div>
+
+      <hr class="separator">
+
+      <!-- Section: Outgoing -->
+      <div class="request-section">
+        <h4 class="section-title">Outgoing (Sent)</h4>
+        <div *ngIf="outgoingRequests.length === 0" class="request-empty">
+          No active outgoing requests
+        </div>
+        <div *ngFor="let req of outgoingRequests" class="request-item glass-card">
+          <div class="req-details">
+            <span class="req-receiver">To: {{ req.receiverName }}</span>
+            <span class="req-sub">Status: <strong class="text-info">{{ req.status }}</strong></span>
+          </div>
+          <button (click)="cancelRideRequest(req.id)" class="btn btn-secondary btn-xs">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
